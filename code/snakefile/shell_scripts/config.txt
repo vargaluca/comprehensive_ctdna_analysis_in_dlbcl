@@ -1,0 +1,1 @@
+rscript:/disk/work/shared/tools/R-4.0.2/bin/Rscript
