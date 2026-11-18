@@ -1,22 +1,143 @@
 #!/usr/bin/env bash
 
-echo path to folders:
-read path
-echo run number:
-read run
+# parameters and process specifications
+if [ $# -eq 0 ]; then
+        echo "No parameters specified."
+        echo " "
+        echo "phased variant capture tool"
+        echo "github: https://github.com/vargaluca/comprehensive_ctdna_analysis_in_dlbcl"
+        echo " "
+        echo "usage:"
+        echo "phased_variants.sh -o output_dir -i input_file -p call/filter"
+        echo " "
+        echo "options:"
+        echo "-h, --help                show brief help"
+        echo "-i, --input               specify input tsv file"
+	echo "-b, --bam			specify corresponding input bam file"
+        echo "-o, --outdir              specify output directory"
+        echo "-p, --process             'call' or 'filter'"
+exit 1
+else
+while test $# -gt 0; do
+  case "$1" in
+    -h|--help)
+        echo " "
+        echo "phased variant capture tool"
+        echo "github: https://github.com/vargaluca/comprehensive_ctdna_analysis_in_dlbcl"
+        echo " "
+        echo "usage:"
+        echo "phased_variants.sh -o output_dir -i input_file -p call/filter"
+        echo " "
+        echo "options:"
+        echo "-h, --help                show brief help"
+        echo "-i, --input               specify input tsv file"
+        echo "-b, --bam                 specify corresponding input bam file"
+        echo "-o, --outdir              specify output directory"
+        echo "-p, --process             'call' or 'filter'"
+      exit 0
+      ;;
+    -i|--input)
+      shift
+      if test $# -gt 0; then
+        export INPUT=$1
+      else
+        echo "no input tsv specified"
+        exit 1
+      fi
+      shift
+      ;;
+    -o|--outdir)
+      shift
+      if test $# -gt 0; then
+        export OUTDIR=$1
+      else
+        echo "no output directory specified"
+        exit 1
+      fi
+      shift
+      ;;
+    -o|--bam)
+      shift
+      if test $# -gt 0; then
+        export BAM=$1
+      else
+        echo "no output bam specified"
+        exit 1
+      fi
+      shift
+      ;;
+    -p|--process)
+      shift
+      if test $# -gt 0; then
+        export PROCESS=$1
+        else
+        echo "no process specified"
+        exit 1
+      fi
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+fi
 
+#configuration
+wd=$(pwd)
+config=$wd/config.txt
+
+Rscript=$(grep "Rscript" $config | cut -f 2 -d ":")
+
+# unfiltered variant calling
+
+Rscript='/disk/work/shared/tools/R-4.0.2/bin/Rscript'
+scripts='/disk/work/users/lv1/DLBCL_genclass_K21/code/R'
+
+if [[ $PROCESS == "call" ]]; then
+
+	echo "variant calling"
+
+	mkdir -p $OUTDIR
+
+	table=$(basename "$INPUT")
+	sample_id=$(echo $table | cut -f 1 -d ".")
+	outfile=$OUTDIR/$sample_id-unfiltered_pv.csv
+
+        if [ ! -f $path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv ]
+        then
+        echo "processing $sample_id"
+#        $Rscript $scripts/phased.R $table $outfile $sample_id #running phased.R script
+        if [ -f $outfile ] #check whether unfiltered file exists and isn't empty, return appropriate message
+        then
+                if [ -s $outfile ]
+                then
+                        unfiltered=$(tail -n +2 $outfile | wc -l)
+                        echo "$sample_id unfiltered variants successfully created with $unfiltered variant pairs."
+                fi
+        else
+                echo "$sample_id unfiltered variants file does not exist."
+        fi
+        fi
+exit 0
+elif [[ $PROCESS == "filter" ]]; then
+	echo "variant filtering yay"
+exit 0
+else
+echo "you stupid fuck"
+exit 0
+fi
 Rscript='/disk/work/shared/tools/R-4.0.2/bin/Rscript'
 scripts='/disk/work/users/lv1/DLBCL_genclass_K21/code/R'
 
 cd $path/maf_files/$run/subsets_local_liq_ranges/
 mkdir -p $path/tables/phased_variants/$run
 
-for maf in *maf
-do
-	maffile=$path/maf_files/$run/subsets_local_liq_ranges/$maf
-	sample_id=$(echo $maf | cut -f 1 -d "_")
-	outfile=$path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv
-	sample=$(echo $maf | cut -f 1 -d "_")
+table=$path/maf_files/$run/subsets_local_liq_ranges/$maf
+sample_id=$(echo $maf | cut -f 1 -d "_")
+outfile=$path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv
+sample=$(echo $maf | cut -f 1 -d "_")
+
 	if [ ! -f $path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv ]
 	then
 	echo "processing $maf"
@@ -33,7 +154,7 @@ do
 		echo "$sample_id unfiltered variants file does not exist."
 	fi
 	fi
-done
+
 
 cd $path/tables/phased_variants/$run
 
