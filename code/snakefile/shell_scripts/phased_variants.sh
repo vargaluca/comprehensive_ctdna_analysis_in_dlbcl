@@ -114,7 +114,7 @@ $Rscript $wd/R/phased.R $table $outfile $sample_id #running phased.R script
 	echo "$sample_id unfiltered variants file does not exist."
 	fi
 else
-echo "$INPUT file does not exist"
+echo "variant table not found"
 fi
 }
 
@@ -134,16 +134,16 @@ then
 
         cat $table | tail -n +2 | while read -r line #for every line in unfiltered phased file perform this whole thing
         	do
-                pattern=$(echo $line | cut -f 30 -d " ") #mutation pattern
-                md_tag=$(echo $line | cut -f 30 -d " ") #md-tag
-                chrom=$(echo $line | cut -f 4 -d " ") #chromosome
-                start=$(($(echo $line | cut -f 5 -d " ") - 100)) #genomic coordinate of first variant, minus 100
-                end=$(($(echo $line | cut -f 6 -d " ") + 100)) #genomic coordinate of second variant, plus 100
+                pattern=$(echo $line | cut -f 30 -d ",") #mutation pattern
+                md_tag=$(echo $line | cut -f 30 -d ",") #md-tag
+                chrom=$(echo $line | cut -f 4 -d ",") #chromosome
+                start=$(($(echo $line | cut -f 5 -d ",") - 100)) #genomic coordinate of first variant, minus 100
+                end=$(($(echo $line | cut -f 6 -d ",") + 100)) #genomic coordinate of second variant, plus 100
                 region="$chrom:$start-$end" #region to search in bam file for cis variants
                 	if [[ $($samtools view -f 1 $bamfile $region | grep $pattern | cut -f 1-25 | grep $md_tag | grep -v "$pattern.*$pattern" | wc -l) > 0 ]] #if grep pattern returns at$
                         then
                         reads=$($samtools view -f 1 $bamfile $region | grep $pattern | cut -f 1-25 | grep $md_tag | grep -v "$pattern.*$pattern" | wc -l)
-                        echo "$line $reads" >> $outfile
+                        echo "$line,$reads" >> $outfile
                 	fi
 		done
 
