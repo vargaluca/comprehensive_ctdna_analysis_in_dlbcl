@@ -8,3 +8,16 @@ A snakemake wrapper script is also available, which makes the calling and perfor
 - samtools (1.23)
 - Rscript (4.4.1)
 - R packages
+
+## Processes:
+### call
+Outputs two csv files: unfiltered, containing all potential PV pairs; filtered, only containinc cis-allelic variant pairs
+
+### filter
+Outputs a filtered PV file (only works with one already existing unfiltered file)
+
+### extract
+Creates bam file only containing reads with PV pairs
+
+
+
