@@ -19,5 +19,9 @@ Outputs a filtered PV file (only works with one already existing unfiltered file
 ### extract
 Creates bam file only containing reads with PV pairs
 
+### recall
+Recalls identified PV pairs from corresponding cfDNA bam file and creates an output csv file with variant pairs
+modes: - 1, 2, 0
+
 
 
