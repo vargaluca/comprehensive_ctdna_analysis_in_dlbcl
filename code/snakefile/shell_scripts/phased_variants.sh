@@ -88,6 +88,7 @@ wd=$(pwd)
 config=$wd/config.txt
 
 Rscript=$(grep "Rscript" $config | cut -f 2 -d ":")
+samtools=$(grep "samtools" $config | cut -f 2 -d ":")
 
 # functions
 call() {
@@ -95,7 +96,7 @@ mkdir -p $OUTDIR
 
 table=$(basename "$INPUT")
 sample_id=$(echo $table | cut -f 1 -d ".")
-outfile=$OUTDIR/$sample_id-unfiltered_pv.csv
+outfile=$OUTDIR/$sample_id.unfiltered_pv.csv
 
 if [ -f $INPUT ]
 then
@@ -120,12 +121,51 @@ fi
 filter() {
 table=$(basename "$INPUT")
 sample_id=$(echo $table | cut -f 1 -d ".")
-outfile=$OUTDIR/$sample_id-unfiltered_pv.csv
+outfile=$OUTDIR/$sample_id.filtered_pv.csv
+bamfile=$BAM
 
 if [ -f $INPUT ]
 then
+	if [ -f $BAM ]
+	then
+	echo "filtering cis variants from $table"
+	touch $outfile
+	echo "$(head -n 1 $table) reads_from_bam" >> $outfile
 
+        cat $table | tail -n +2 | while read -r line #for every line in unfiltered phased file perform this whole thing
+        	do
+                pattern=$(echo $line | cut -f 30 -d " ") #mutation pattern
+                md_tag=$(echo $line | cut -f 30 -d " ") #md-tag
+                chrom=$(echo $line | cut -f 4 -d " ") #chromosome
+                start=$(($(echo $line | cut -f 5 -d " ") - 100)) #genomic coordinate of first variant, minus 100
+                end=$(($(echo $line | cut -f 6 -d " ") + 100)) #genomic coordinate of second variant, plus 100
+                region="$chrom:$start-$end" #region to search in bam file for cis variants
+                	if [[ $($samtools view -f 1 $bamfile $region | grep $pattern | cut -f 1-25 | grep $md_tag | grep -v "$pattern.*$pattern" | wc -l) > 0 ]] #if grep pattern returns at$
+                        then
+                        reads=$($samtools view -f 1 $bamfile $region | grep $pattern | cut -f 1-25 | grep $md_tag | grep -v "$pattern.*$pattern" | wc -l)
+                        echo "$line $reads" >> $outfile
+                	fi
+		done
 
+		if [ -f $outfile ] #check whether filtered file exists and isn't empty, return appropriate message
+        	then
+        		if [ -s $outfile ]
+                	then
+                	unfiltered=$(tail -n +2 $table | wc -l)
+                	filtered=$(tail -n +2 $outfile | wc -l)
+                	out=$(($unfiltered - $filtered)) #number of variants thrown out
+                	echo "$sample filtered variants successfully created with $filtered variant pairs."
+                	echo "$out variant pairs thrown out."
+			else
+		        echo "$sample filtered variants file does not exist."
+			fi
+		fi
+	else
+	echo "bam file not found"
+	fi
+else
+echo "unfiltered pv file not found"
+fi
 }
 
 # starting defined process function
@@ -143,47 +183,3 @@ else
 	exit 0
 fi
 
-cd $path/tables/phased_variants/$run
-
-module load samtools
-for table in *hard_unfiltered*tsv #filtering cis variants
-do
-sample=$(echo $table | cut -f 1 -d ".")
-if [ ! -f $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv ]
-then
-echo "filtering cis variants from $table"
-touch $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv
-echo "$(head -n 1 $table) reads_from_bam" >> $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv
-
-	cat $table | tail -n +2 | while read -r line #for every line in unfiltered phased file perform this whole thing
-	do
-		pattern=$(echo $line | cut -f 30 -d " ") #mutation pattern
-		md_tag=$(echo $line | cut -f 30 -d " ") #md-tag
-		chrom=$(echo $line | cut -f 4 -d " ") #chromosome
-		start=$(($(echo $line | cut -f 5 -d " ") - 100)) #genomic coordinate of first variant, minus 100
-		end=$(($(echo $line | cut -f 6 -d " ") + 100)) #genomic coordinate of second variant, plus 100
-		region="$chrom:$start-$end" #region to search in bam file for cis variants
-		bamfile=$(ls $path/recal_aligned_reads/$run/$sample*.recalibrated.bam) #bam file to be searched
-		if [[ $(samtools view -f 1 $bamfile $region | grep $pattern | cut -f 1-25 | grep $md_tag | grep -v "$pattern.*$pattern" | wc -l) > 0 ]] #if grep pattern returns at least one line, write the variants to a new file (plus number of reads)
-			then
-			reads=$(samtools view -f 1 $bamfile $region | grep $pattern | cut -f 1-25 | grep $md_tag | grep -v "$pattern.*$pattern" | wc -l)
-			echo "$line $reads" >> $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv
-		fi
-	done
-fi
-
-if [ -f $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv ] #check whether filtered file exists and isn't empty, return appropriate message
-	then
-	if [ -s $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv ]
-		then
-		unfiltered=$(tail -n +2 $table | wc -l)
-		filtered=$(tail -n +2 $path/tables/phased_variants/$run/$sample.hard_filtered_phased.tsv | wc -l)
-		out=$(($unfiltered - $filtered)) #number of variants thrown out
-		echo "$sample filtered variants successfully created with $filtered variant pairs."
-		echo "$out variant pairs thrown out."
-	fi
-	else
-        echo "$sample filtered variants file does not exist."
-fi
-done
-module unload samtools
