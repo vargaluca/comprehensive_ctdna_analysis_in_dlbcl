@@ -89,72 +89,59 @@ config=$wd/config.txt
 
 Rscript=$(grep "Rscript" $config | cut -f 2 -d ":")
 
-# unfiltered variant calling
+# functions
+call() {
+mkdir -p $OUTDIR
 
-Rscript='/disk/work/shared/tools/R-4.0.2/bin/Rscript'
-scripts='/disk/work/users/lv1/DLBCL_genclass_K21/code/R'
+table=$(basename "$INPUT")
+sample_id=$(echo $table | cut -f 1 -d ".")
+outfile=$OUTDIR/$sample_id-unfiltered_pv.csv
 
-if [[ $PROCESS == "call" ]]; then
+if [ -f $INPUT ]
+then
+echo "processing $sample_id"
+$Rscript $wd/R/phased.R $table $outfile $sample_id #running phased.R script
 
-	echo "variant calling"
-
-	mkdir -p $OUTDIR
-
-	table=$(basename "$INPUT")
-	sample_id=$(echo $table | cut -f 1 -d ".")
-	outfile=$OUTDIR/$sample_id-unfiltered_pv.csv
-
-        if [ ! -f $path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv ]
-        then
-        echo "processing $sample_id"
-#        $Rscript $scripts/phased.R $table $outfile $sample_id #running phased.R script
-        if [ -f $outfile ] #check whether unfiltered file exists and isn't empty, return appropriate message
-        then
-                if [ -s $outfile ]
-                then
-                        unfiltered=$(tail -n +2 $outfile | wc -l)
-                        echo "$sample_id unfiltered variants successfully created with $unfiltered variant pairs."
-                fi
-        else
-                echo "$sample_id unfiltered variants file does not exist."
-        fi
-        fi
-exit 0
-elif [[ $PROCESS == "filter" ]]; then
-	echo "variant filtering yay"
-exit 0
-else
-echo "you stupid fuck"
-exit 0
-fi
-Rscript='/disk/work/shared/tools/R-4.0.2/bin/Rscript'
-scripts='/disk/work/users/lv1/DLBCL_genclass_K21/code/R'
-
-cd $path/maf_files/$run/subsets_local_liq_ranges/
-mkdir -p $path/tables/phased_variants/$run
-
-table=$path/maf_files/$run/subsets_local_liq_ranges/$maf
-sample_id=$(echo $maf | cut -f 1 -d "_")
-outfile=$path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv
-sample=$(echo $maf | cut -f 1 -d "_")
-
-	if [ ! -f $path/tables/phased_variants/$run/$sample_id.hard_unfiltered_phased.tsv ]
-	then
-	echo "processing $maf"
-
-	$Rscript $scripts/phased.R $maffile $outfile $sample #running phased.R script
 	if [ -f $outfile ] #check whether unfiltered file exists and isn't empty, return appropriate message
 	then
 		if [ -s $outfile ]
 		then
-			unfiltered=$(tail -n +2 $outfile | wc -l)
-			echo "$sample_id unfiltered variants successfully created with $unfiltered variant pairs."
+		unfiltered=$(tail -n +2 $outfile | wc -l)
+		echo "$outfile variants successfully created with $unfiltered variant pairs."
 		fi
 	else
-		echo "$sample_id unfiltered variants file does not exist."
+	echo "$sample_id unfiltered variants file does not exist."
 	fi
-	fi
+else
+echo "$INPUT file does not exist"
+fi
+}
 
+filter() {
+table=$(basename "$INPUT")
+sample_id=$(echo $table | cut -f 1 -d ".")
+outfile=$OUTDIR/$sample_id-unfiltered_pv.csv
+
+if [ -f $INPUT ]
+then
+
+
+}
+
+# starting defined process function
+
+if [[ $PROCESS == "call" ]]; then
+	call
+	exit 0
+elif [[ $PROCESS == "filter" ]]; then
+	filter
+	exit 0
+elif [[ $PROCESS == "filter" ]]; then
+	extract
+else
+	echo "$PROCESS not recognised"
+	exit 0
+fi
 
 cd $path/tables/phased_variants/$run
 
