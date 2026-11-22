@@ -1,1 +1,2 @@
-rscript:/disk/work/shared/tools/R-4.0.2/bin/Rscript
+Rscript:/disk/work/shared/tools/R-4.0.2/bin/Rscript
+samtools:/usr/bin/samtools
