@@ -7,21 +7,46 @@ A snakemake wrapper script is also available, which makes the calling and perfor
 ## Requirements:
 - samtools (1.23)
 - Rscript (4.4.1)
-- R packages
+- R packages: dplyr, readr
 
+Options:
+```
+    -h, --help                show brief help
+    -p, --process             'call', 'only-call', 'only-filter', 'extract', 'recall'
+    -i, --input               specify input variants csv file
+    -b, --bam                 specify corresponding input bam file
+    -o, --outdir              specify output directory
+    -t, --ct-variants         specify ctdna variants file
+    -m, --mode                0, 1, 2 variant requirements for recall function
+```
 ## Processes:
 ### call
-Outputs two csv files: unfiltered, containing all potential PV pairs; filtered, only containinc cis-allelic variant pairs
-
-### filter
-Outputs a filtered PV file (only works with one already existing unfiltered file)
+Outputs two csv files:
+- unfiltered: containing all potential PV pairs
+- filtered: only containinc cis-allelic variant pairs confirmed from corresponding bam files
+```
+bash phased_variants.sh -p call -i /data/variants.csv -b /data/tissue.bam -o /data/outfolder
+```
+### recall
+Recalls identified PV pairs from corresponding cfDNA bam file and creates an output csv file with variant pairs\
+modes (default: 1):
+- 0: doesn't require variants called from cfDNA
+- 1: requires at least one variant called from cfDNA
+- 2: requires both variants of a pair to be called from cfDNA
+```
+bash phased_variants.sh -p recall -i /data/filtered_pv.csv -b /data/cfdna.bam -t /data/cfdna_variants.csv -o /data/outfolder -m 1
+```
 
 ### extract
-Creates bam file only containing reads with PV pairs
+Creates bam file only containing reads with PV pairs from the cfDNA sample
+```
+bash phased_variants.sh -p extract -i /data/variants.csv -b /data/variants.bam -o /data/outfolder
+```
 
-### recall
-Recalls identified PV pairs from corresponding cfDNA bam file and creates an output csv file with variant pairs
-modes: - 1, 2, 0
+### only-call
+Outputs a csv file with potential phased variant pairs\
+(has not been checked for allelic position)
 
-
-
+### only-filter
+Outputs a filtered PV file checked for allelic positions\
+(only works with one already existing unfiltered file)
