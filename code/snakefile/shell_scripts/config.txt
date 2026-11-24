@@ -1,2 +1,3 @@
-Rscript:/disk/work/shared/tools/R-4.0.2/bin/Rscript
-samtools:/usr/bin/samtools
+Rscript:/Library/Frameworks/R.framework/Resources/bin/Rscript
+samtools:/usr/local/bin/samtools
+scripts:/Volumes/Extreme_SSD/comprehensive_ctdna_analysis_in_dlbcl/code/snakefile/R
