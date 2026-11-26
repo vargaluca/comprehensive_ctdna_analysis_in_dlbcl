@@ -83,6 +83,6 @@ In the case of the mentioned first two IGKV3-15 variants, the pattern will use f
 
 - an MD-tag pattern (T6C)
 
-This confirms that the fragments retrieved by the mutation patterns are results of mutation and not wild-type sequences captured by mistake 
-Results of the capture can be output into a separate bam containing only ctDNA fragments and validated manually using IGV.
+This confirms that the fragments retrieved by the mutation patterns are results of mutation and not wild-type sequences captured by mistake.
+Results of the capture can be output into a separate bam file containing only ctDNA fragments by using *extract*, and can be validated manually using IGV if needed.
 
